@@ -1,14 +1,8 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-
 import { Knex } from "knex";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { generateUserSrpKeys } from "@app/lib/crypto/srp";
 
 import { AuthMethod } from "../../services/auth/auth-type";
 import { TableName } from "../schemas";
-import { seedData1 } from "../seed-data";
+import { generateUserSrpKeys, seedData1 } from "../seed-data";
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
@@ -24,7 +18,6 @@ export async function seed(knex: Knex): Promise<void> {
         id: seedData1.id,
         email: seedData1.email,
         superAdmin: true,
-        ghost: false,
         firstName: "test",
         lastName: "",
         authMethods: [AuthMethod.EMAIL],
@@ -36,7 +29,7 @@ export async function seed(knex: Knex): Promise<void> {
     ])
     .returning("*");
 
-  const encKeys = await generateUserSrpKeys(seedData1.email, seedData1.password);
+  const encKeys = await generateUserSrpKeys(seedData1.password);
   // password: testInfisical@1
   await knex(TableName.UserEncryptionKey).insert([
     {
@@ -65,9 +58,4 @@ export async function seed(knex: Knex): Promise<void> {
     refreshVersion: 1,
     lastUsed: new Date()
   });
-
-  seedData1.encryptionKeys = {
-    publicKey: encKeys.publicKey,
-    privateKey: encKeys.plainPrivateKey
-  };
 }
