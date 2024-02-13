@@ -10,6 +10,7 @@ import { createSecretBlindIndex, encryptAsymmetric } from "@app/lib/crypto";
 import { OrgMembershipRole, TableName } from "../schemas";
 import { seedData1 } from "../seed-data";
 import { getConfig, initEnvConfig } from "@app/lib/config/env";
+import { initLogger } from "@app/lib/logger";
 
 export const DEFAULT_PROJECT_ENVS = [
   { name: "Development", slug: "dev" },
@@ -18,7 +19,7 @@ export const DEFAULT_PROJECT_ENVS = [
 ];
 
 export async function seed(knex: Knex): Promise<void> {
-  initEnvConfig();
+  initEnvConfig(await initLogger());
   const appCfg = getConfig();
   // Deletes ALL existing entries
   await knex(TableName.Project).del();
