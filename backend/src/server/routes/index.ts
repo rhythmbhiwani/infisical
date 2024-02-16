@@ -362,6 +362,7 @@ export const registerRoutes = async (
     folderDAL,
     permissionService,
     secretImportDAL,
+    projectDAL,
     secretDAL
   });
   const integrationAuthService = integrationAuthServiceFactory({
@@ -397,6 +398,7 @@ export const registerRoutes = async (
     secretVersionTagDAL,
     secretBlindIndexDAL,
     permissionService,
+    projectDAL,
     secretDAL,
     secretTagDAL,
     snapshotService,
@@ -410,6 +412,7 @@ export const registerRoutes = async (
     secretTagDAL,
     secretApprovalRequestSecretDAL: sarSecretDAL,
     secretApprovalRequestReviewerDAL: sarReviewerDAL,
+    projectDAL,
     secretVersionDAL,
     secretBlindIndexDAL,
     secretApprovalRequestDAL,
