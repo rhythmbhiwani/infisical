@@ -138,7 +138,7 @@ export const orgServiceFactory = ({
 
     const user = await userDAL.create(
       {
-        ghost: true,
+        isGhost: true,
         authMethods: [AuthMethod.EMAIL],
         email,
         isAccepted: true
@@ -384,7 +384,7 @@ export const orgServiceFactory = ({
           email: inviteeEmail,
           isAccepted: false,
           authMethods: [AuthMethod.EMAIL],
-          ghost: false
+          isGhost: false
         },
         tx
       );
