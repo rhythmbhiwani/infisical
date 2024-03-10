@@ -386,62 +386,64 @@ export const SecretOverviewPage = () => {
                   leftIcon={<FontAwesomeIcon icon={faMagnifyingGlass} />}
                 />
               </div>
-              <div>
-                <ProjectPermissionCan
-                  I={ProjectPermissionActions.Create}
-                  a={subject(ProjectPermissionSub.Secrets, { secretPath })}
-                >
-                  {(isAllowed) => (
-                    <Button
-                      variant="outline_bg"
-                      leftIcon={<FontAwesomeIcon icon={faPlus} />}
-                      onClick={() => handlePopUpOpen("addSecretsInAllEnvs")}
-                      className="h-10 rounded-r-none"
-                      isDisabled={!isAllowed}
-                    >
-                      Add Secret
-                    </Button>
-                  )}
-                </ProjectPermissionCan>
-                <DropdownMenu
-                  open={popUp.misc.isOpen}
-                  onOpenChange={(isOpen) => handlePopUpToggle("misc", isOpen)}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <IconButton
-                      ariaLabel="add-folder-or-import"
-                      variant="outline_bg"
-                      className="rounded-l-none bg-mineshaft-600 p-3"
-                    >
-                      <FontAwesomeIcon icon={faAngleDown} />
-                    </IconButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="flex flex-col space-y-1 p-1.5">
-                      <ProjectPermissionCan
-                        I={ProjectPermissionActions.Create}
-                        a={subject(ProjectPermissionSub.Secrets, { secretPath })}
+              {userAvailableEnvs.length > 0 && (
+                <div>
+                  <ProjectPermissionCan
+                    I={ProjectPermissionActions.Create}
+                    a={subject(ProjectPermissionSub.Secrets, { secretPath })}
+                  >
+                    {(isAllowed) => (
+                      <Button
+                        variant="outline_bg"
+                        leftIcon={<FontAwesomeIcon icon={faPlus} />}
+                        onClick={() => handlePopUpOpen("addSecretsInAllEnvs")}
+                        className="h-10 rounded-r-none"
+                        isDisabled={!isAllowed}
                       >
-                        {(isAllowed) => (
-                          <Button
-                            leftIcon={<FontAwesomeIcon icon={faFolderPlus} />}
-                            onClick={() => {
-                              handlePopUpOpen("addFolder");
-                              handlePopUpClose("misc");
-                            }}
-                            isDisabled={!isAllowed}
-                            variant="outline_bg"
-                            className="h-10"
-                            isFullWidth
-                          >
-                            Add Folder
-                          </Button>
-                        )}
-                      </ProjectPermissionCan>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                        Add Secret
+                      </Button>
+                    )}
+                  </ProjectPermissionCan>
+                  <DropdownMenu
+                    open={popUp.misc.isOpen}
+                    onOpenChange={(isOpen) => handlePopUpToggle("misc", isOpen)}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <IconButton
+                        ariaLabel="add-folder-or-import"
+                        variant="outline_bg"
+                        className="rounded-l-none bg-mineshaft-600 p-3"
+                      >
+                        <FontAwesomeIcon icon={faAngleDown} />
+                      </IconButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <div className="flex flex-col space-y-1 p-1.5">
+                        <ProjectPermissionCan
+                          I={ProjectPermissionActions.Create}
+                          a={subject(ProjectPermissionSub.Secrets, { secretPath })}
+                        >
+                          {(isAllowed) => (
+                            <Button
+                              leftIcon={<FontAwesomeIcon icon={faFolderPlus} />}
+                              onClick={() => {
+                                handlePopUpOpen("addFolder");
+                                handlePopUpClose("misc");
+                              }}
+                              isDisabled={!isAllowed}
+                              variant="outline_bg"
+                              className="h-10"
+                              isFullWidth
+                            >
+                              Add Folder
+                            </Button>
+                          )}
+                        </ProjectPermissionCan>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -504,14 +506,18 @@ export const SecretOverviewPage = () => {
                     className="bg-mineshaft-700"
                   />
                 )}
-                {isTableEmpty && !isTableLoading && (
+                {userAvailableEnvs.length === 0 && (
                   <Tr>
                     <Td colSpan={userAvailableEnvs.length + 1}>
-                      <EmptyState title="Let's add some secrets" icon={faFolderBlank} iconSize="3x">
+                      <EmptyState
+                        title="You have no environments, start by adding some"
+                        iconSize="3x"
+                      >
                         <Link
                           href={{
-                            pathname: "/project/[id]/secrets/[env]",
-                            query: { id: workspaceId, env: userAvailableEnvs?.[0]?.slug }
+                            pathname: "/project/[id]/settings",
+                            query: { id: workspaceId },
+                            hash: "environments"
                           }}
                         >
                           <Button
@@ -520,9 +526,26 @@ export const SecretOverviewPage = () => {
                             colorSchema="primary"
                             size="md"
                           >
-                            Go to {userAvailableEnvs?.[0]?.name}
+                            Add environments
                           </Button>
                         </Link>
+                      </EmptyState>
+                    </Td>
+                  </Tr>
+                )}
+                {isTableEmpty && !isTableLoading && (
+                  <Tr>
+                    <Td colSpan={userAvailableEnvs.length + 1}>
+                      <EmptyState title="Let's add some secrets" icon={faFolderBlank} iconSize="3x">
+                        <Button
+                          className="mt-4"
+                          variant="outline_bg"
+                          colorSchema="primary"
+                          size="md"
+                          onClick={() => handlePopUpOpen("addSecretsInAllEnvs")}
+                        >
+                          Add Secrets
+                        </Button>
                       </EmptyState>
                     </Td>
                   </Tr>
