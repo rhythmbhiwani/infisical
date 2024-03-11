@@ -5,7 +5,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { useOrganization, useWorkspace } from "@app/context";
 
-import { Select, SelectItem, Tooltip } from "../v2";
+import { Tooltip } from "../v2";
+import { ComboBox } from "../v2/Combobox";
 
 type Props = {
   pageName: string;
@@ -91,22 +92,22 @@ export default function NavHeader({
       {currentEnv && secretPath === "/" && (
         <>
           <FontAwesomeIcon icon={faAngleRight} className="ml-3 mr-1.5 text-xs text-gray-400" />
-          <div className="rounded-md pl-3 hover:bg-bunker-100/10">
+          <div className="rounded-md hover:bg-bunker-100/10">
             <Tooltip content="Select environment">
-              <Select
+              <ComboBox
+                dynamicWidth
                 value={currentEnv}
-                onValueChange={(value) => {
+                onChange={(value: string) => {
                   if (value && onEnvChange) onEnvChange(value);
                 }}
-                className="bg-transparent pl-0 text-sm font-medium text-primary/80 hover:text-primary"
+                options={userAvailableEnvs.map((env) => ({
+                  id: env.id,
+                  label: env.name,
+                  value: env.slug
+                }))}
+                className="w-auto bg-transparent pl-0 text-sm font-medium text-primary/80 hover:text-primary"
                 dropdownContainerClassName="text-bunker-200 bg-mineshaft-800 border border-mineshaft-600 drop-shadow-2xl"
-              >
-                {userAvailableEnvs?.map(({ name, slug }) => (
-                  <SelectItem value={slug} key={slug}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </Select>
+              />
             </Tooltip>
           </div>
         </>

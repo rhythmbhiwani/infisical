@@ -4,6 +4,7 @@ import { faEye, faEyeSlash, faPenToSquare, faPlus, faX } from "@fortawesome/free
 
 import { useNotificationContext } from "@app/components/context/Notifications/NotificationProvider";
 import { Select, SelectItem } from "@app/components/v2";
+import { ComboBox } from "@app/components/v2/Combobox";
 import { useSubscription, useWorkspace } from "@app/context";
 import updateUserProjectPermission from "@app/ee/api/memberships/UpdateUserProjectPermission";
 import {
@@ -243,6 +244,15 @@ const ProjectUsersTable = ({ userData, changeData, myUser, filter, isUserListLoa
                   </td>
                   <td className="border-t border-mineshaft-600 py-2 pl-6 pr-10 text-gray-300">
                     <div className="flex h-full flex-row items-center justify-start">
+                      <ComboBox
+                        onChange={(e: string) => handleRoleUpdate(index, e)}
+                        isDisabled={myRole !== "admin" || myUser === row.email}
+                        value={row.role}
+                        options={[
+                          { id: "admin", label: "Admin", value: "admin" },
+                          { id: "member", label: "Member", value: "member" }
+                        ]}
+                      />
                       <Select
                         className="w-36 bg-mineshaft-700"
                         dropdownContainerClassName="bg-mineshaft-700"

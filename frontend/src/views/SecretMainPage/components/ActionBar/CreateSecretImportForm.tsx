@@ -4,20 +4,13 @@ import { AxiosError } from "axios";
 import { z } from "zod";
 
 import { useNotificationContext } from "@app/components/context/Notifications/NotificationProvider";
-import {
-  Button,
-  FormControl,
-  Input,
-  Modal,
-  ModalContent,
-  Select,
-  SelectItem
-} from "@app/components/v2";
+import { Button, FormControl, Input, Modal, ModalContent } from "@app/components/v2";
+import { ComboBox } from "@app/components/v2/Combobox";
 import { useWorkspace } from "@app/context";
 import { useCreateSecretImport } from "@app/hooks/api";
 
 const typeSchema = z.object({
-  environment: z.string().trim(),
+  environment: z.string({ required_error: "Please select environment" }).trim(),
   secretPath: z
     .string()
     .trim()
@@ -46,15 +39,18 @@ export const CreateSecretImportForm = ({
   onClose,
   onTogglePopUp
 }: Props) => {
+  const { currentWorkspace } = useWorkspace();
+  const environments = currentWorkspace?.environments || [];
+
   const {
     handleSubmit,
     control,
     reset,
     formState: { isSubmitting }
-  } = useForm<TFormSchema>({ resolver: zodResolver(typeSchema) });
-  const { currentWorkspace } = useWorkspace();
-  const environments = currentWorkspace?.environments || [];
-
+  } = useForm<TFormSchema>({
+    defaultValues: { environment: environments[0]?.slug || "" },
+    resolver: zodResolver(typeSchema)
+  });
   const { createNotification } = useNotificationContext();
 
   const { mutateAsync: createSecretImport } = useCreateSecretImport();
@@ -103,7 +99,32 @@ export const CreateSecretImportForm = ({
         subTitle="To inherit secrets from another environment or folder"
       >
         <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <Controller
+          <div className="mb-4">
+            <Controller
+              name="environment"
+              control={control}
+              render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
+                <FormControl
+                  label="Environment"
+                  errorText={error?.message}
+                  isError={Boolean(error)}
+                >
+                  <ComboBox
+                    value={value}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    options={environments.map((env) => ({
+                      id: env.id,
+                      label: env.name,
+                      value: env.slug
+                    }))}
+                  />
+                </FormControl>
+              )}
+            />
+          </div>
+
+          {/* <Controller
             control={control}
             name="environment"
             defaultValue={environments?.[0]?.slug}
@@ -123,14 +144,14 @@ export const CreateSecretImportForm = ({
                 </Select>
               </FormControl>
             )}
-          />
+          /> */}
           <Controller
             control={control}
             name="secretPath"
             defaultValue="/"
             render={({ field, fieldState: { error } }) => (
               <FormControl label="Secret Path" isError={Boolean(error)} errorText={error?.message}>
-                <Input {...field} />
+                <Input autoFocus {...field} />
               </FormControl>
             )}
           />
