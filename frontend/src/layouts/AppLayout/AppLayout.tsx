@@ -50,6 +50,7 @@ import {
   SelectItem,
   UpgradePlanModal
 } from "@app/components/v2";
+import { SecretReferenceSuggestionPopup } from "@app/components/v2/SecretInput/SecretReferenceSuggestionPopup";
 import { UpgradeOverlay } from "@app/components/v2/UpgradeOverlay";
 import {
   OrgPermissionActions,
@@ -100,7 +101,12 @@ const supportOptions = [
 ];
 
 const formSchema = yup.object({
-  name: yup.string().required().label("Project Name").trim().max(64, "Too long, maximum length is 64 characters"),
+  name: yup
+    .string()
+    .required()
+    .label("Project Name")
+    .trim()
+    .max(64, "Too long, maximum length is 64 characters"),
   addMembers: yup.bool().required().label("Add Members")
 });
 
@@ -426,7 +432,7 @@ export const AppLayout = ({ children }: LayoutProps) => {
                       <Select
                         defaultValue={currentWorkspace?.id}
                         value={currentWorkspace?.id}
-                        className="w-full [&>*:first-child]:truncate bg-mineshaft-600 py-2.5 font-medium"
+                        className="w-full bg-mineshaft-600 py-2.5 font-medium [&>*:first-child]:truncate"
                         onValueChange={(value) => {
                           router.push(`/project/${value}/secrets/overview`);
                           localStorage.setItem("projectData.id", value);
@@ -847,6 +853,8 @@ export const AppLayout = ({ children }: LayoutProps) => {
             isOpen={popUp?.createOrg?.isOpen}
             onClose={() => handlePopUpToggle("createOrg", false)}
           />
+          <SecretReferenceSuggestionPopup />
+
           <main className="flex-1 overflow-y-auto overflow-x-hidden bg-bunker-800 dark:[color-scheme:dark]">
             {children}
           </main>

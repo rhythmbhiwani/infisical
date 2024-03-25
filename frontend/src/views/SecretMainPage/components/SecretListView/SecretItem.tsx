@@ -280,6 +280,7 @@ export const SecretItem = memo(
                     render={({ field }) => (
                       <SecretInput
                         isReadOnly={isReadOnly}
+                        currentEnvironment={environment}
                         key="secret-value"
                         isVisible={isVisible}
                         {...field}
