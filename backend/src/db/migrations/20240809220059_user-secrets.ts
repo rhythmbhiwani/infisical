@@ -20,6 +20,7 @@ export async function up(knex: Knex): Promise<void> {
       t.binary("cardExpiry").nullable();
       t.binary("cardCvv").nullable();
       t.binary("secureNote").nullable();
+      t.binary("wifiPassword").nullable();
       t.text("iv").notNullable();
       t.foreign("userId").references("id").inTable(TableName.Users).onDelete("CASCADE");
       t.timestamps(true, true, true);

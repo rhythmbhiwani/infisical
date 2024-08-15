@@ -23,12 +23,14 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
       delete secretInitialValues.cardExpiry;
       delete secretInitialValues.cardLastFourDigits;
       delete secretInitialValues.secureNote;
+      delete secretInitialValues.wifiPassword;
     } else if (data.secretType === UserSecretType.CREDIT_CARD) {
       delete secretInitialValues.loginURL;
       delete secretInitialValues.username;
       delete secretInitialValues.password;
       delete secretInitialValues.secureNote;
       secretInitialValues.isUsernameSecret = false;
+      delete secretInitialValues.wifiPassword;
     } else if (data.secretType === UserSecretType.SECURE_NOTE) {
       delete secretInitialValues.loginURL;
       delete secretInitialValues.username;
@@ -38,6 +40,17 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
       delete secretInitialValues.cardExpiry;
       delete secretInitialValues.cardLastFourDigits;
       secretInitialValues.isUsernameSecret = false;
+      delete secretInitialValues.wifiPassword;
+    } else if (data.secretType === UserSecretType.WIFI) {
+      delete secretInitialValues.loginURL;
+      delete secretInitialValues.username;
+      delete secretInitialValues.password;
+      delete secretInitialValues.cardCvv;
+      delete secretInitialValues.cardNumber;
+      delete secretInitialValues.cardExpiry;
+      delete secretInitialValues.cardLastFourDigits;
+      secretInitialValues.isUsernameSecret = false;
+      delete secretInitialValues.secureNote;
     }
 
     return secretInitialValues;
@@ -82,6 +95,10 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
         data.secureNote,
         (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
       ),
+      wifiPassword: setKnexStringValue(
+        data.wifiPassword,
+        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
+      ),
       iv
     };
   };
@@ -104,7 +121,8 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
       cardNumber: data.cardNumber ? userSecretDecryptor({ cipherTextBlob: data.cardNumber }).toString() : null,
       cardExpiry: data.cardExpiry ? userSecretDecryptor({ cipherTextBlob: data.cardExpiry }).toString() : null,
       cardCvv: data.cardCvv ? userSecretDecryptor({ cipherTextBlob: data.cardCvv }).toString() : null,
-      secureNote: data.secureNote ? userSecretDecryptor({ cipherTextBlob: data.secureNote }).toString() : null
+      secureNote: data.secureNote ? userSecretDecryptor({ cipherTextBlob: data.secureNote }).toString() : null,
+      wifiPassword: data.wifiPassword ? userSecretDecryptor({ cipherTextBlob: data.wifiPassword }).toString() : null
     };
   };
 
@@ -132,6 +150,7 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
     const count = await userSecretsDAL.countUserSecrets({ userId, secretType });
     const secrets = await userSecretsDAL.find({ userId, secretType }, { offset, limit });
     const decryptedSecrets = await Promise.all(secrets.map(decryptUserSecret));
+    console.log("decryptedSecrets", decryptedSecrets);
 
     return { count, secrets: decryptedSecrets };
   };

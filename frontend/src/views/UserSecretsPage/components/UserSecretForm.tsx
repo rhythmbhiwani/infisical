@@ -14,7 +14,8 @@ import { UsePopUpState } from "@app/hooks/usePopUp";
 const secretNamePlaceholder = {
   [UserSecretType.WEB_LOGIN]: "Google Account, Facebook Account...",
   [UserSecretType.CREDIT_CARD]: "Visa Card, Mastercard...",
-  [UserSecretType.SECURE_NOTE]: "Confidential Work Info, Important Account Info..."
+  [UserSecretType.SECURE_NOTE]: "Confidential Work Info, Important Account Info...",
+  [UserSecretType.WIFI]: "MY WIFI"
 };
 
 const schema = z
@@ -23,7 +24,8 @@ const schema = z
     secretType: z.enum([
       UserSecretType.WEB_LOGIN,
       UserSecretType.CREDIT_CARD,
-      UserSecretType.SECURE_NOTE
+      UserSecretType.SECURE_NOTE,
+      UserSecretType.WIFI
     ]),
     name: z
       .string()
@@ -45,7 +47,8 @@ const schema = z
     cardCvv: z
       .union([z.string().regex(/^\d{3,4}$/, "Please enter a valid cvv"), z.literal("")])
       .optional(),
-    secureNote: z.string().optional()
+    secureNote: z.string().optional(),
+    wifiPassword: z.string().optional()
   })
   .superRefine((data, ctx) => {
     switch (data.secretType) {
@@ -88,6 +91,16 @@ const schema = z
           ctx.addIssue({
             path: ["secureNote"],
             message: "Please enter a note.",
+            code: z.ZodIssueCode.custom
+          });
+        }
+        break;
+
+      case UserSecretType.WIFI:
+        if (!data.wifiPassword) {
+          ctx.addIssue({
+            path: ["wifiPassword"],
+            message: "Please enter a password.",
             code: z.ZodIssueCode.custom
           });
         }
@@ -166,6 +179,18 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
           </FormControl>
         )}
       />
+
+      {secretType === UserSecretType.WIFI && (
+        <Controller
+          control={control}
+          name="wifiPassword"
+          render={({ field, fieldState: { error } }) => (
+            <FormControl label="Wifi Password" isError={Boolean(error)} errorText={error?.message}>
+              <Input {...field} placeholder="******" type="password" />
+            </FormControl>
+          )}
+        />
+      )}
 
       {secretType === UserSecretType.WEB_LOGIN && (
         <>

@@ -24,6 +24,7 @@ export const UserSecretsSchema = z.object({
   cardExpiry: zodBuffer.nullable().optional(),
   cardCvv: zodBuffer.nullable().optional(),
   secureNote: zodBuffer.nullable().optional(),
+  wifiPassword: zodBuffer.nullable().optional(),
   iv: z.string(),
   createdAt: z.date(),
   updatedAt: z.date()

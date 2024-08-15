@@ -16,7 +16,12 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
     schema: {
       body: z
         .object({
-          secretType: z.enum([UserSecretType.WEB_LOGIN, UserSecretType.CREDIT_CARD, UserSecretType.SECURE_NOTE]),
+          secretType: z.enum([
+            UserSecretType.WEB_LOGIN,
+            UserSecretType.CREDIT_CARD,
+            UserSecretType.SECURE_NOTE,
+            UserSecretType.WIFI
+          ]),
           name: z
             .string()
             .min(1, "Please enter a name for your secret")
@@ -24,6 +29,7 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
           loginURL: z.string().url().optional(),
           username: z.string().optional(),
           password: z.string().optional(),
+          wifiPassword: z.string().optional(),
           cardLastFourDigits: z.string().optional(),
           isUsernameSecret: z.boolean().default(false),
           cardNumber: z
@@ -78,6 +84,16 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
                 ctx.addIssue({
                   path: ["secureNote"],
                   message: "Secure note is required",
+                  code: z.ZodIssueCode.custom
+                });
+              }
+              break;
+
+            case UserSecretType.WIFI:
+              if (!data.wifiPassword) {
+                ctx.addIssue({
+                  path: ["wifiPassword"],
+                  message: "Wifi password is required",
                   code: z.ZodIssueCode.custom
                 });
               }
@@ -117,7 +133,12 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
       }),
       body: z
         .object({
-          secretType: z.enum([UserSecretType.WEB_LOGIN, UserSecretType.CREDIT_CARD, UserSecretType.SECURE_NOTE]),
+          secretType: z.enum([
+            UserSecretType.WEB_LOGIN,
+            UserSecretType.CREDIT_CARD,
+            UserSecretType.SECURE_NOTE,
+            UserSecretType.WIFI
+          ]),
           name: z
             .string()
             .min(1, "Please enter a name for your secret")
@@ -125,6 +146,7 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
           loginURL: z.string().url().optional(),
           username: z.string().optional(),
           password: z.string().optional(),
+          wifiPassword: z.string().optional(),
           cardLastFourDigits: z.string().optional(),
           isUsernameSecret: z.boolean().default(false),
           cardNumber: z
@@ -184,6 +206,16 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
               }
               break;
 
+            case UserSecretType.WIFI:
+              if (!data.wifiPassword) {
+                ctx.addIssue({
+                  path: ["wifiPassword"],
+                  message: "Wifi password is required",
+                  code: z.ZodIssueCode.custom
+                });
+              }
+              break;
+
             default:
               break;
           }
@@ -217,7 +249,7 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
         offset: z.coerce.number().min(0).max(100).default(0),
         limit: z.coerce.number().min(1).max(100).default(25),
         secretType: z
-          .enum([UserSecretType.WEB_LOGIN, UserSecretType.CREDIT_CARD, UserSecretType.SECURE_NOTE])
+          .enum([UserSecretType.WEB_LOGIN, UserSecretType.CREDIT_CARD, UserSecretType.SECURE_NOTE, UserSecretType.WIFI])
           .optional()
       }),
       response: {
@@ -225,7 +257,12 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
           secrets: z.array(
             z.object({
               id: z.string().uuid(),
-              secretType: z.enum([UserSecretType.WEB_LOGIN, UserSecretType.CREDIT_CARD, UserSecretType.SECURE_NOTE]),
+              secretType: z.enum([
+                UserSecretType.WEB_LOGIN,
+                UserSecretType.CREDIT_CARD,
+                UserSecretType.SECURE_NOTE,
+                UserSecretType.WIFI
+              ]),
               name: z.string(),
               loginURL: z.string().url().nullable(),
               username: z.string().nullable(),
@@ -236,6 +273,7 @@ export const registerUserSecretsRouter = async (server: FastifyZodProvider) => {
               cardExpiry: z.string().nullable(),
               cardCvv: z.string().nullable(),
               secureNote: z.string().nullable(),
+              wifiPassword: z.string().nullable(),
               createdAt: z.date(),
               updatedAt: z.date()
             })

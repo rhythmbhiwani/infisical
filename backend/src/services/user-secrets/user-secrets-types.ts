@@ -1,7 +1,8 @@
 export const enum UserSecretType {
   WEB_LOGIN = "web_login",
   CREDIT_CARD = "credit_card",
-  SECURE_NOTE = "secure_note"
+  SECURE_NOTE = "secure_note",
+  WIFI = "wifi"
 }
 
 export type TCreateUserSecretDTO = {
@@ -18,4 +19,5 @@ export type TCreateUserSecretDTO = {
   cardLastFourDigits?: string;
   cardCvv?: string;
   secureNote?: string;
+  wifiPassword?: string;
 };

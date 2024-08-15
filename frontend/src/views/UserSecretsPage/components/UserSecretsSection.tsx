@@ -13,6 +13,7 @@ import { ShowSecretDetailModal } from "./ShowSecretDetailModal";
 import { UserSecretsCreditCardsTable } from "./UserSecretsCreditCardsTable";
 import { UserSecretsSecureNotesTable } from "./UserSecretsSecureNotesTable";
 import { UserSecretsWebLoginTable } from "./UserSecretsWebLoginTable";
+import { UserSecretsWifiTable } from "./UserSecretsWifiTable";
 
 type DeleteModalData = { name: string; id: string };
 
@@ -109,6 +110,26 @@ export const UserSecretsSection = () => {
           </Button>
         </div>
         <UserSecretsSecureNotesTable handlePopUpOpen={handlePopUpOpen} />
+      </div>
+
+      {/* Wifi Password */}
+      <div className="mb-6 rounded-lg border border-mineshaft-600 bg-mineshaft-900 p-4">
+        <div className="mb-4 flex justify-between">
+          <p className="text-xl font-semibold text-mineshaft-100">WIFI</p>
+          <Button
+            colorSchema="primary"
+            leftIcon={<FontAwesomeIcon icon={faPlus} />}
+            onClick={() => {
+              handlePopUpOpen("addOrUpdateUserSecret", {
+                isEditMode: false,
+                secretValue: { secretType: UserSecretType.WIFI }
+              });
+            }}
+          >
+            Add Secret
+          </Button>
+        </div>
+        <UserSecretsWifiTable handlePopUpOpen={handlePopUpOpen} />
       </div>
 
       <AddUserSecretModal popUp={popUp} handlePopUpClose={handlePopUpClose} />

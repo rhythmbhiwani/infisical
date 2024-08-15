@@ -11,6 +11,7 @@ export type TUserSecret = {
   cardLastFourDigits: null | string;
   cardCvv: null | string;
   secureNote: null | string;
+  wifiPassword: null | string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -18,7 +19,8 @@ export type TUserSecret = {
 export const enum UserSecretType {
   WEB_LOGIN = "web_login",
   CREDIT_CARD = "credit_card",
-  SECURE_NOTE = "secure_note"
+  SECURE_NOTE = "secure_note",
+  WIFI = "wifi"
 }
 
 export type TUserSecretRequest = {
