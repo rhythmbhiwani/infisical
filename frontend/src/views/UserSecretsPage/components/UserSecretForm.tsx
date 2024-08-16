@@ -1,14 +1,15 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 import { createNotification } from "@app/components/notifications";
-import { Button, Checkbox, FormControl, Input } from "@app/components/v2";
+import { Button, FormControl, Input, Select, SelectItem } from "@app/components/v2";
 import {
+  TUserSecretRequest,
   useCreateUserSecret,
-  UserSecretType,
   useUpdateUserSecret
 } from "@app/hooks/api/userSecrets";
+import { UserSecretType, userSecretTypeOptions } from "@app/hooks/api/userSecrets/enum";
+import { userSecretSchema } from "@app/hooks/api/userSecrets/schema";
 import { UsePopUpState } from "@app/hooks/usePopUp";
 
 const secretNamePlaceholder = {
@@ -17,101 +18,6 @@ const secretNamePlaceholder = {
   [UserSecretType.SECURE_NOTE]: "Confidential Work Info, Important Account Info...",
   [UserSecretType.WIFI]: "MY WIFI"
 };
-
-const schema = z
-  .object({
-    id: z.string().optional(),
-    secretType: z.enum([
-      UserSecretType.WEB_LOGIN,
-      UserSecretType.CREDIT_CARD,
-      UserSecretType.SECURE_NOTE,
-      UserSecretType.WIFI
-    ]),
-    name: z
-      .string()
-      .min(1, "Please enter a name for your secret")
-      .max(100, "Please enter less than 100 characters"),
-    loginURL: z.string().url().optional(),
-    username: z.string().optional(),
-    password: z.string().optional(),
-    cardLastFourDigits: z.string().optional(),
-    isUsernameSecret: z.boolean().default(false),
-    cardNumber: z
-      .string()
-      .regex(/^\d{13,19}$/, "Please enter a valid card number")
-      .optional(),
-    cardExpiry: z
-      .string()
-      .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid expiry date format. Use MM/YY format.")
-      .optional(),
-    cardCvv: z
-      .union([z.string().regex(/^\d{3,4}$/, "Please enter a valid cvv"), z.literal("")])
-      .optional(),
-    secureNote: z.string().optional(),
-    wifiPassword: z.string().optional()
-  })
-  .superRefine((data, ctx) => {
-    switch (data.secretType) {
-      case UserSecretType.WEB_LOGIN:
-        if (!data.username) {
-          ctx.addIssue({
-            path: ["username"],
-            message: "Please enter a username.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        if (!data.password) {
-          ctx.addIssue({
-            path: ["password"],
-            message: "Please enter a password.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        break;
-
-      case UserSecretType.CREDIT_CARD:
-        if (!data.cardNumber) {
-          ctx.addIssue({
-            path: ["cardNumber"],
-            message: "Please enter a card number.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        if (!data.cardExpiry) {
-          ctx.addIssue({
-            path: ["cardExpiry"],
-            message: "Please enter an expiry date.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        break;
-
-      case UserSecretType.SECURE_NOTE:
-        if (!data.secureNote) {
-          ctx.addIssue({
-            path: ["secureNote"],
-            message: "Please enter a note.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        break;
-
-      case UserSecretType.WIFI:
-        if (!data.wifiPassword) {
-          ctx.addIssue({
-            path: ["wifiPassword"],
-            message: "Please enter a password.",
-            code: z.ZodIssueCode.custom
-          });
-        }
-        break;
-
-      default:
-        break;
-    }
-  });
-
-export type FormData = z.infer<typeof schema>;
 
 type Props = {
   popUp: UsePopUpState<["addOrUpdateUserSecret"]>;
@@ -134,15 +40,15 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
     handleSubmit,
     formState: { isSubmitting },
     watch
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<TUserSecretRequest>({
+    resolver: zodResolver(userSecretSchema),
     defaultValues: removeNullValues(popUp.addOrUpdateUserSecret?.data?.secretValue || {})
   });
 
-  const onFormSubmit = async (formData: FormData) => {
+  const onFormSubmit = async (formData: TUserSecretRequest) => {
     try {
       const secretData = formData;
-      secretData.cardLastFourDigits = formData.cardNumber?.slice(-4);
+
       if (isEditMode) {
         await updateUserSecret.mutateAsync({
           id: popUp.addOrUpdateUserSecret.data?.id,
@@ -172,6 +78,28 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
     <form onSubmit={handleSubmit(onFormSubmit)}>
       <Controller
         control={control}
+        name="secretType"
+        defaultValue={UserSecretType.WEB_LOGIN}
+        render={({ field: { onChange, ...field }, fieldState: { error } }) => (
+          <FormControl label="Secret Type" errorText={error?.message} isError={Boolean(error)}>
+            <Select
+              defaultValue={field.value}
+              {...field}
+              onValueChange={(e) => onChange(e)}
+              className="w-full"
+            >
+              {userSecretTypeOptions.map(({ label, value }) => (
+                <SelectItem value={String(value || "")} key={label}>
+                  {label}
+                </SelectItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+      />
+
+      <Controller
+        control={control}
         name="name"
         render={({ field, fieldState: { error } }) => (
           <FormControl label="Secret Name" isError={Boolean(error)} errorText={error?.message}>
@@ -183,7 +111,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
       {secretType === UserSecretType.WIFI && (
         <Controller
           control={control}
-          name="wifiPassword"
+          name="data.wifiPassword"
           render={({ field, fieldState: { error } }) => (
             <FormControl label="Wifi Password" isError={Boolean(error)} errorText={error?.message}>
               <Input {...field} placeholder="******" type="password" />
@@ -196,7 +124,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
         <>
           <Controller
             control={control}
-            name="loginURL"
+            name="data.loginURL"
             render={({ field, fieldState: { error } }) => (
               <FormControl
                 label="Login URL (Optional)"
@@ -209,7 +137,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
           />
           <Controller
             control={control}
-            name="username"
+            name="data.username"
             defaultValue=""
             render={({ field, fieldState: { error } }) => (
               <FormControl
@@ -223,24 +151,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
           />
           <Controller
             control={control}
-            name="isUsernameSecret"
-            defaultValue={false}
-            render={({ field: { onBlur, value, onChange } }) => (
-              <div className="mb-5 ml-2">
-                <Checkbox
-                  id="username-as-secret"
-                  isChecked={value}
-                  onCheckedChange={onChange}
-                  onBlur={onBlur}
-                >
-                  Treat username as sensitive
-                </Checkbox>
-              </div>
-            )}
-          />
-          <Controller
-            control={control}
-            name="password"
+            name="data.password"
             render={({ field, fieldState: { error } }) => (
               <FormControl label="Password" isError={Boolean(error)} errorText={error?.message}>
                 <Input {...field} autoComplete="off" placeholder="" type="password" />
@@ -254,7 +165,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
         <>
           <Controller
             control={control}
-            name="cardNumber"
+            name="data.cardNumber"
             render={({ field, fieldState: { error } }) => (
               <FormControl label="Card Number" isError={Boolean(error)} errorText={error?.message}>
                 <Input
@@ -269,7 +180,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
           <div className="flex w-full flex-row items-start justify-center space-x-2">
             <Controller
               control={control}
-              name="cardExpiry"
+              name="data.cardExpiry"
               render={({ field, fieldState: { error } }) => (
                 <FormControl
                   label="Expiry Date"
@@ -289,7 +200,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
             />
             <Controller
               control={control}
-              name="cardCvv"
+              name="data.cardCvv"
               render={({ field, fieldState: { error } }) => (
                 <FormControl
                   label="CVV (Optional)"
@@ -314,7 +225,7 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
       {secretType === UserSecretType.SECURE_NOTE && (
         <Controller
           control={control}
-          name="secureNote"
+          name="data.secureNote"
           render={({ field, fieldState: { error } }) => (
             <FormControl
               label="Enter Secret Note"

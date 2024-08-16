@@ -1,11 +1,12 @@
 import { randomBytes } from "crypto";
-
-import { setKnexStringValue } from "@app/lib/knex";
+import { z } from "zod";
 
 import { TKmsServiceFactory } from "../kms/kms-service";
 import { KmsDataKey } from "../kms/kms-types";
 import { TUserSecretsDALFactory } from "./user-secrets-dal";
-import { TCreateUserSecretDTO, UserSecretType } from "./user-secrets-types";
+import { UserSecretType } from "./user-secrets-enums";
+import { userSecretsResponseSchema } from "./user-secrets-schemas";
+import { TCreateUserSecretDTO } from "./user-secrets-types";
 
 type TUserSecretsServiceFactoryDep = {
   kmsService: Pick<TKmsServiceFactory, "createCipherPairWithDataKey">;
@@ -15,129 +16,55 @@ type TUserSecretsServiceFactoryDep = {
 export type TUserSecretsServiceFactory = ReturnType<typeof userSecretsServiceFactory>;
 
 export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserSecretsServiceFactoryDep) => {
-  const cleanupValues = (data: TCreateUserSecretDTO) => {
-    const secretInitialValues = data;
-    if (data.secretType === UserSecretType.WEB_LOGIN) {
-      delete secretInitialValues.cardCvv;
-      delete secretInitialValues.cardNumber;
-      delete secretInitialValues.cardExpiry;
-      delete secretInitialValues.cardLastFourDigits;
-      delete secretInitialValues.secureNote;
-      delete secretInitialValues.wifiPassword;
-    } else if (data.secretType === UserSecretType.CREDIT_CARD) {
-      delete secretInitialValues.loginURL;
-      delete secretInitialValues.username;
-      delete secretInitialValues.password;
-      delete secretInitialValues.secureNote;
-      secretInitialValues.isUsernameSecret = false;
-      delete secretInitialValues.wifiPassword;
-    } else if (data.secretType === UserSecretType.SECURE_NOTE) {
-      delete secretInitialValues.loginURL;
-      delete secretInitialValues.username;
-      delete secretInitialValues.password;
-      delete secretInitialValues.cardCvv;
-      delete secretInitialValues.cardNumber;
-      delete secretInitialValues.cardExpiry;
-      delete secretInitialValues.cardLastFourDigits;
-      secretInitialValues.isUsernameSecret = false;
-      delete secretInitialValues.wifiPassword;
-    } else if (data.secretType === UserSecretType.WIFI) {
-      delete secretInitialValues.loginURL;
-      delete secretInitialValues.username;
-      delete secretInitialValues.password;
-      delete secretInitialValues.cardCvv;
-      delete secretInitialValues.cardNumber;
-      delete secretInitialValues.cardExpiry;
-      delete secretInitialValues.cardLastFourDigits;
-      secretInitialValues.isUsernameSecret = false;
-      delete secretInitialValues.secureNote;
-    }
-
-    return secretInitialValues;
-  };
-
-  const encryptUserSecret = async (data: TCreateUserSecretDTO) => {
+  const encryptUserSecret = async (inputData: TCreateUserSecretDTO) => {
     const iv = randomBytes(16).toString("hex");
     const { encryptor: userSecretEncryptor } = await kmsService.createCipherPairWithDataKey({
       type: KmsDataKey.UserSecret,
-      actorId: iv + data.actorId
+      actorId: iv + inputData.actorId
     });
 
     return {
-      userId: data.actorId,
-      orgId: data.orgId,
-      secretType: data.secretType,
-      name: data.name,
-      loginURL: data.loginURL ?? null,
-      username: setKnexStringValue(
-        data.username,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      password: setKnexStringValue(
-        data.password,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      isUsernameSecret: data.isUsernameSecret,
-      cardNumber: setKnexStringValue(
-        data.cardNumber,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      cardExpiry: setKnexStringValue(
-        data.cardExpiry,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      cardLastFourDigits: data.cardLastFourDigits ?? null,
-      cardCvv: setKnexStringValue(
-        data.cardCvv,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      secureNote: setKnexStringValue(
-        data.secureNote,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
-      wifiPassword: setKnexStringValue(
-        data.wifiPassword,
-        (value) => userSecretEncryptor({ plainText: Buffer.from(value) }).cipherTextBlob
-      ),
+      userId: inputData.actorId,
+      orgId: inputData.orgId,
+      secretType: inputData.secretType,
+      name: inputData.name,
+      encryptedData: userSecretEncryptor({ plainText: Buffer.from(JSON.stringify(inputData.data)) }).cipherTextBlob,
       iv
     };
   };
 
-  const decryptUserSecret = async (data: Awaited<ReturnType<typeof userSecretsDAL.findOne>>) => {
-    const { iv } = data;
+  const decryptUserSecret = async (fetchedData: Awaited<ReturnType<typeof userSecretsDAL.findOne>>) => {
+    const { iv, encryptedData } = fetchedData;
     const { decryptor: userSecretDecryptor } = await kmsService.createCipherPairWithDataKey({
       type: KmsDataKey.UserSecret,
-      actorId: iv + data.userId
+      actorId: iv + fetchedData.userId
     });
 
-    return {
-      ...data,
-      loginURL: data.loginURL ?? null,
-      isUsernameSecret: data.isUsernameSecret ?? false,
-      secretType: data.secretType as UserSecretType,
-      cardLastFourDigits: data.cardLastFourDigits ?? null,
-      username: data.username ? userSecretDecryptor({ cipherTextBlob: data.username }).toString() : null,
-      password: data.password ? userSecretDecryptor({ cipherTextBlob: data.password }).toString() : null,
-      cardNumber: data.cardNumber ? userSecretDecryptor({ cipherTextBlob: data.cardNumber }).toString() : null,
-      cardExpiry: data.cardExpiry ? userSecretDecryptor({ cipherTextBlob: data.cardExpiry }).toString() : null,
-      cardCvv: data.cardCvv ? userSecretDecryptor({ cipherTextBlob: data.cardCvv }).toString() : null,
-      secureNote: data.secureNote ? userSecretDecryptor({ cipherTextBlob: data.secureNote }).toString() : null,
-      wifiPassword: data.wifiPassword ? userSecretDecryptor({ cipherTextBlob: data.wifiPassword }).toString() : null
+    type ResponseType = z.infer<typeof userSecretsResponseSchema>;
+    const response: ResponseType = {
+      id: fetchedData.id,
+      name: fetchedData.name,
+      userId: fetchedData.userId,
+      orgId: fetchedData.orgId,
+      updatedAt: fetchedData.updatedAt,
+      createdAt: fetchedData.createdAt,
+      secretType: fetchedData.secretType as UserSecretType,
+      data: JSON.parse(userSecretDecryptor({ cipherTextBlob: encryptedData }).toString()) as ResponseType["data"]
     };
+
+    return response;
   };
 
-  const createUserSecret = async (data: TCreateUserSecretDTO) => {
-    const cleanedUpValues = cleanupValues(data);
-    const encryptedUserSecret = await encryptUserSecret(cleanedUpValues);
+  const createUserSecret = async (inputData: TCreateUserSecretDTO) => {
+    const encryptedUserSecret = await encryptUserSecret(inputData);
 
     const newUserSecret = await userSecretsDAL.create(encryptedUserSecret);
 
     return newUserSecret;
   };
 
-  const updateUserSecret = async (id: string, data: TCreateUserSecretDTO) => {
-    const cleanedUpValues = cleanupValues(data);
-    const encryptedUserSecret = await encryptUserSecret(cleanedUpValues);
+  const updateUserSecret = async (id: string, inputData: TCreateUserSecretDTO) => {
+    const encryptedUserSecret = await encryptUserSecret(inputData);
 
     const secret = await userSecretsDAL.updateById(id, encryptedUserSecret);
     return secret;
@@ -145,12 +72,24 @@ export const userSecretsServiceFactory = ({ kmsService, userSecretsDAL }: TUserS
 
   const getAllUserSecrets = async (
     userId: string,
-    { offset, limit, secretType }: { offset: number; limit: number; secretType?: UserSecretType }
+    {
+      offset,
+      limit,
+      secretType,
+      search
+    }: { offset: number; limit: number; secretType?: UserSecretType; search?: string }
   ) => {
-    const count = await userSecretsDAL.countUserSecrets({ userId, secretType });
-    const secrets = await userSecretsDAL.find({ userId, secretType }, { offset, limit });
+    const filter = { userId, secretType, search };
+    if (!secretType) {
+      delete filter.secretType;
+    }
+    if (!search) {
+      delete filter.search;
+    }
+
+    const count = await userSecretsDAL.countUserSecrets(filter);
+    const secrets = await userSecretsDAL.findAll({ ...filter, offset, limit });
     const decryptedSecrets = await Promise.all(secrets.map(decryptUserSecret));
-    console.log("decryptedSecrets", decryptedSecrets);
 
     return { count, secrets: decryptedSecrets };
   };

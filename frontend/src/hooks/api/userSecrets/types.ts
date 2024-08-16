@@ -1,41 +1,29 @@
+import { z } from "zod";
+
+import { UserSecretType } from "./enum";
+import { userSecretSchema } from "./schema";
+
 export type TUserSecret = {
   id: string;
   secretType: UserSecretType;
   name: string;
-  loginURL: null | string;
-  username: null | string;
-  password: null | string;
-  isUsernameSecret: boolean;
-  cardNumber: null | string;
-  cardExpiry: null | string;
-  cardLastFourDigits: null | string;
-  cardCvv: null | string;
-  secureNote: null | string;
-  wifiPassword: null | string;
+  userId: string;
+  orgId: string;
+  data: {
+    loginURL: null | string;
+    username: null | string;
+    password: null | string;
+    cardNumber: null | string;
+    cardExpiry: null | string;
+    cardCvv: null | string;
+    secureNote: null | string;
+    wifiPassword: null | string;
+  };
   createdAt: Date;
   updatedAt: Date;
 };
 
-export const enum UserSecretType {
-  WEB_LOGIN = "web_login",
-  CREDIT_CARD = "credit_card",
-  SECURE_NOTE = "secure_note",
-  WIFI = "wifi"
-}
-
-export type TUserSecretRequest = {
-  secretType: UserSecretType;
-  name: string;
-  loginURL?: string;
-  username?: string;
-  password?: string;
-  isUsernameSecret: boolean;
-  cardLastFourDigits?: string;
-  cardNumber?: string;
-  cardExpiry?: string;
-  cardCvv?: string;
-  secureNote?: string;
-};
+export type TUserSecretRequest = z.infer<typeof userSecretSchema>;
 
 export type TUserSecretResponse = {
   id: string;

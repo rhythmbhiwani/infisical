@@ -11,16 +11,7 @@ export async function up(knex: Knex): Promise<void> {
       t.uuid("orgId").notNullable();
       t.text("secretType").notNullable();
       t.string("name").notNullable();
-      t.text("loginURL").nullable();
-      t.binary("username").nullable();
-      t.binary("password").nullable();
-      t.boolean("isUsernameSecret").defaultTo(false);
-      t.binary("cardNumber").nullable();
-      t.text("cardLastFourDigits").nullable();
-      t.binary("cardExpiry").nullable();
-      t.binary("cardCvv").nullable();
-      t.binary("secureNote").nullable();
-      t.binary("wifiPassword").nullable();
+      t.binary("encryptedData").notNullable();
       t.text("iv").notNullable();
       t.foreign("userId").references("id").inTable(TableName.Users).onDelete("CASCADE");
       t.timestamps(true, true, true);

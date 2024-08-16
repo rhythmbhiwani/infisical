@@ -1,23 +1,18 @@
-export const enum UserSecretType {
-  WEB_LOGIN = "web_login",
-  CREDIT_CARD = "credit_card",
-  SECURE_NOTE = "secure_note",
-  WIFI = "wifi"
-}
+import { z } from "zod";
+
+import { UserSecretType } from "./user-secrets-enums";
+import { creditCardDataSchema, loginDataSchema, secureNoteDataSchema, wifiDataSchema } from "./user-secrets-schemas";
+
+export type EncryptedDataType =
+  | z.infer<typeof loginDataSchema>
+  | z.infer<typeof creditCardDataSchema>
+  | z.infer<typeof secureNoteDataSchema>
+  | z.infer<typeof wifiDataSchema>;
 
 export type TCreateUserSecretDTO = {
   actorId: string;
   orgId: string;
   secretType: UserSecretType;
   name: string;
-  loginURL?: string;
-  username?: string;
-  password?: string;
-  isUsernameSecret: boolean;
-  cardNumber?: string;
-  cardExpiry?: string;
-  cardLastFourDigits?: string;
-  cardCvv?: string;
-  secureNote?: string;
-  wifiPassword?: string;
+  data: EncryptedDataType;
 };

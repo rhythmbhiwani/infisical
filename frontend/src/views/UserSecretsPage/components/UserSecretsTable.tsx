@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { faKey } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -12,12 +12,15 @@ import {
   THead,
   Tr
 } from "@app/components/v2";
-import { TUserSecret, useGetUserSecrets, UserSecretType } from "@app/hooks/api/userSecrets";
+import { TUserSecret, useGetUserSecrets } from "@app/hooks/api/userSecrets";
+import { UserSecretType } from "@app/hooks/api/userSecrets/enum";
 import { UsePopUpState } from "@app/hooks/usePopUp";
 
-import { UserSecretsSecureNotesRow } from "./UserSecretsSecureNotesRow";
+import { UserSecretsRow } from "./UserSecretsRow";
 
 type Props = {
+  selectedTypeFilter: UserSecretType | null;
+  search?: string;
   handlePopUpOpen: (
     popUpName: keyof UsePopUpState<
       ["showSecretData", "addOrUpdateUserSecret", "deleteUserSecretConfirmation"]
@@ -33,14 +36,21 @@ type Props = {
   ) => void;
 };
 
-export const UserSecretsSecureNotesTable = ({ handlePopUpOpen }: Props) => {
+export const UserSecretsTable = ({ selectedTypeFilter, handlePopUpOpen, search }: Props) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+
   const { isLoading, data } = useGetUserSecrets({
     offset: (page - 1) * perPage,
     limit: perPage,
-    secretType: UserSecretType.SECURE_NOTE
+    search,
+    secretType: selectedTypeFilter
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedTypeFilter]);
+
   return (
     <TableContainer>
       <Table>
@@ -48,15 +58,16 @@ export const UserSecretsSecureNotesTable = ({ handlePopUpOpen }: Props) => {
           <Tr>
             <Th>Name</Th>
             <Th>Created At</Th>
-            <Th>Note</Th>
+            <Th>Type</Th>
+            <Th>Details</Th>
             <Th aria-label="button" className="w-5" />
           </Tr>
         </THead>
         <TBody>
-          {isLoading && <TableSkeleton columns={4} innerKey="user-secrets-secure-notes" />}
+          {isLoading && <TableSkeleton columns={6} innerKey="user-secrets-table" />}
           {!isLoading &&
             data?.secrets?.map((row) => (
-              <UserSecretsSecureNotesRow key={row.id} row={row} handlePopUpOpen={handlePopUpOpen} />
+              <UserSecretsRow key={row.id} row={row} handlePopUpOpen={handlePopUpOpen} />
             ))}
         </TBody>
       </Table>
@@ -72,9 +83,7 @@ export const UserSecretsSecureNotesTable = ({ handlePopUpOpen }: Props) => {
             onChangePerPage={(newPerPage) => setPerPage(newPerPage)}
           />
         )}
-      {!isLoading && !data?.secrets?.length && (
-        <EmptyState title="No secure notes found" icon={faKey} />
-      )}
+      {!isLoading && !data?.secrets?.length && <EmptyState title="No secrets found" icon={faKey} />}
     </TableContainer>
   );
 };
