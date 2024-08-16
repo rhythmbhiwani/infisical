@@ -76,27 +76,29 @@ export const UserSecretForm = ({ popUp, handlePopUpClose }: Props) => {
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)}>
-      <Controller
-        control={control}
-        name="secretType"
-        defaultValue={UserSecretType.WEB_LOGIN}
-        render={({ field: { onChange, ...field }, fieldState: { error } }) => (
-          <FormControl label="Secret Type" errorText={error?.message} isError={Boolean(error)}>
-            <Select
-              defaultValue={field.value}
-              {...field}
-              onValueChange={(e) => onChange(e)}
-              className="w-full"
-            >
-              {userSecretTypeOptions.map(({ label, value }) => (
-                <SelectItem value={String(value || "")} key={label}>
-                  {label}
-                </SelectItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      />
+      {!isEditMode && (
+        <Controller
+          control={control}
+          name="secretType"
+          defaultValue={UserSecretType.WEB_LOGIN}
+          render={({ field: { onChange, ...field }, fieldState: { error } }) => (
+            <FormControl label="Secret Type" errorText={error?.message} isError={Boolean(error)}>
+              <Select
+                defaultValue={field.value}
+                {...field}
+                onValueChange={(e) => onChange(e)}
+                className="w-full"
+              >
+                {userSecretTypeOptions.map(({ label, value }) => (
+                  <SelectItem value={String(value || "")} key={label}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        />
+      )}
 
       <Controller
         control={control}
